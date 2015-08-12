@@ -11,7 +11,7 @@ module WebpackRails
     attr_accessor :config
 
     def initialize(template)
-      self.config = Rails.application.config.webpack_rails
+      self.config = Rails.application.config.webpackrails
       super(template)
     end
 
@@ -25,14 +25,20 @@ module WebpackRails
       # return if there is nothing to do
       return data unless should_webpack?
 
-      run_webpack(context.pathname || context.logical_path)
+      evaluated = run_webpack(context.pathname || context.logical_path)
+
+      evaluate_dependencies(context.environment.paths).each do |path|
+        context.depend_on(path.to_s)
+      end
+
+      evaluated
     end
 
     private 
 
     # Set the temp path
     def tmp_path
-      @tmp_path ||= Rails.root.join('tmp', 'cache', 'webpack-rails').freeze
+      @tmp_path ||= Rails.root.join('tmp', 'cache', 'webpackrails').freeze
     end
 
     # return the webpack command path
@@ -43,6 +49,42 @@ module WebpackRails
     # make sure the temp dir exists
     def ensure_tmp_dir_exists!
       FileUtils.mkdir_p(rails_path(tmp_path))
+      @deps_path = File.join(tmp_path, '_$webpackrails_dependencies');
+    end
+
+    # Filter out node_module/ files
+    def evaluate_dependencies(asset_paths) 
+      return dependencies if !config.ignore_node_modules
+
+      dependencies.select do |path|
+        path.start_with?(*asset_paths)
+      end
+    end
+
+    # return array
+    def dependencies
+      ret ||= begin
+        if !File.exists?(@deps_path)
+          return []
+        end
+
+        output = ''
+        begin
+          file = File.open(@deps_path, 'r')
+          output = file.read
+          file.close
+        rescue
+          output = ''
+        end
+
+        if !output
+          return []
+        end
+
+        output.lines.map(&:strip).select do |path|
+          File.exists?(path)
+        end
+      end
     end
 
     # make sure the webpack config file exists
@@ -93,6 +135,8 @@ module WebpackRails
       env_hash = {}
       env_hash["NODE_PATH"] = asset_paths unless uses_exorcist
       env_hash["NODE_ENV"] = config.node_env || Rails.env
+      env_hash["WR_TMP_FILE"] = @deps_path;
+      env_hash['RAILS_ROOT'] = Rails.root.to_s
       env_hash
     end
 
@@ -116,7 +160,12 @@ module WebpackRails
         raise WebpackRails::WebpackError.new("Error while running `#{command}`:\n\n#{stderr}")
       end
 
-      output_file.read
+      output = output_file.read
+
+      output_file.close 
+      output_file.unlink
+
+      output
     end
 
     def rails_path(*paths)

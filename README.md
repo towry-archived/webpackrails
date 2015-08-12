@@ -4,6 +4,8 @@ This gem make [Webpack](http://webpack.github.io) works with [Rails](http://gith
 
 ## Installation
 
+*Rails: >= 3*
+
 Add this line to your application's Gemfile:
 
 ```ruby
@@ -24,7 +26,8 @@ Create `package.json` in your Rails root:
 {
   "name": "app",
   "dependencies": {
-    "webpack": "^1.11.0"
+    "webpack": "^1.11.0",
+    "railshot-webpack-plugin": "*"
   }
 }
 ```
@@ -36,7 +39,25 @@ Run `npm i` to install the dependencies.
 Make sure you have a `webpack.config.js` file in your Rails root dir, or specific your
 webpack config file within `application.rb`
 
-`config.webpack_rails.config_file = "path_to_the_config_file"`
+`config.webpackrails.config_file = "path_to_the_config_file"`
+
+### Watch file for changes
+
+Use webpack plugin `railshot-webpack-plugin` in your `webpack.config.js`.
+If you haven't install the plugin yet, run `npm install railshot-webpack-plugin`.
+
+```js
+// webpack.config.js
+
+var railshotPlugin = require('railshot-webpack-plugin');
+
+// no entry here.
+module.exports = {
+  plugins: [
+    railshotPlugin()
+  ]
+}
+```
 
 ### Config
 

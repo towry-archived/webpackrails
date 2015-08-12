@@ -2,22 +2,29 @@
 
 module WebpackRails
   class Railtie < Rails::Engine
-    config.webpack_rails = ActiveSupport::OrderedOptions.new 
+    config.webpackrails = ActiveSupport::OrderedOptions.new 
 
     # Webpack config file location
-    config.webpack_rails.config_file = ''
+    config.webpackrails.config_file = ''
 
     # Process every file?
-    config.webpack_rails.force = false
+    config.webpackrails.force = false
 
     # paths to be parse
-    config.webpack_rails.paths = [lambda { |p| p.start_with?(Rails.root.join("app").to_s) },
+    config.webpackrails.paths = [lambda { |p| p.start_with?(Rails.root.join("app").to_s) },
                                   lambda { |p| p.start_with?(Rails.root.join('node_modules').to_s) }]
 
-    config.webpack_rails.node_bin = "node_modules/.bin/"
+    config.webpackrails.node_bin = "node_modules/.bin/"
+
+    # ignore node_modules
+    config.webpackrails.ignore_node_modules = true
 
     initializer :setup_webpack do |app|
       app.assets.register_postprocessor "application/javascript", WebpackRails::WebpackProcessor
+    end
+
+    rake_tasks do 
+      Dir[File.join(File.dirname(__FILE__), "tasks/*.rake")].each { |f| load f }
     end
   end
 end
