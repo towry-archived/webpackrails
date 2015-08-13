@@ -62,7 +62,7 @@ module.exports = {
 
 #### Troubleshooting
 
-[Wiki troubleshooting](./wiki/Troubleshooting)
+[Wiki troubleshooting](https://github.com/towry/webpackrails/wiki/Troubleshooting)
 
 ### Config
 
