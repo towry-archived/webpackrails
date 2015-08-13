@@ -32,8 +32,7 @@ Create `package.json` in your Rails root:
 }
 ```
 
-Run `npm i` to install the dependencies. **Make sure the `railshot-webpack-plugin` is
-in the dependencies instead of `devDependencies`**.
+Run `npm i` to install the dependencies.
 
 ## Usage
 
