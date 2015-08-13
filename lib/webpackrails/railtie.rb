@@ -19,6 +19,10 @@ module WebpackRails
     # ignore node_modules
     config.webpackrails.ignore_node_modules = true
 
+    # array of string to test if the file need to be process by this gem.
+    # see `commonjs_module?` method
+    config.webpackrails.force_condition = []
+
     initializer :setup_webpack do |app|
       app.assets.register_postprocessor "application/javascript", WebpackRails::WebpackProcessor
     end

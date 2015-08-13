@@ -49,7 +49,7 @@ module WebpackRails
     # make sure the temp dir exists
     def ensure_tmp_dir_exists!
       FileUtils.mkdir_p(rails_path(tmp_path))
-      @deps_path = File.join(tmp_path, '_$webpackrails_dependencies');
+      @deps_path ||= File.join(tmp_path, '_$webpackrails_dependencies');
     end
 
     # Filter out node_module/ files
@@ -124,7 +124,12 @@ module WebpackRails
     end
     
     def commonjs_module?
-      data.to_s.include?("module.exports") || data.present? && data.to_s.include?("require") || data.present? && data.to_s.include?("import")
+      return false if !data.present?
+
+      condition = ["module.exports", "require", "import", "export", "exports", "export default", "React"]
+      data_s = data.to_s
+
+      (condition + config.force_condition).uniq.any? { |c| data_s.include?(c) }
     end
 
     def asset_paths
@@ -154,6 +159,10 @@ module WebpackRails
       base_directory = File.dirname(file)
 
       Logger::log "\nWebpack: #{command}"
+
+      mut_env = ENV.to_hash
+      mut_env.merge!(env)
+      ENV.replace(mut_env)
       stdout, stderr, status = Open3.capture3(env, command, stdin_data: data, chdir: base_directory)
 
       if !status.success?
