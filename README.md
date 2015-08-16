@@ -63,9 +63,17 @@ module.exports = {
 
 [Wiki troubleshooting](https://github.com/towry/webpackrails/wiki/Troubleshooting)
 
-### Config
+
+## Feature
+
+* Support embedding erb in javascript, see [troubleshooting](https://github.com/towry/webpackrails/wiki/Troubleshooting) page.  **Aug 16, 2015**
+* Support es6 (just use webpack babel loader)
+* Support react jsx syntax (just use webpack babel loader)
+
+## Config
 
 See [source](https://raw.githubusercontent.com/towry/webpackrails/master/lib/webpackrails/railtie.rb)
+
 
 ## Development
 
