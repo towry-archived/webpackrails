@@ -1,4 +1,6 @@
-# WebpackRails
+# WebpackRails 
+
+**v2.0.0**
 
 This gem make [Webpack](http://webpack.github.io) works with [Rails](http://github.com/rails/rails).
 
