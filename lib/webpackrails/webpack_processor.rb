@@ -145,6 +145,7 @@ module WebpackRails
       env_hash
     end
 
+    # Not supported yet.
     def uses_exorcist
       false 
     end

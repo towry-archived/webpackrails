@@ -24,7 +24,7 @@ module WebpackRails
     config.webpackrails.force_condition = []
 
     initializer :setup_webpack do |app|
-      app.assets.register_postprocessor "application/javascript", WebpackRails::WebpackProcessor
+      app.assets.register_preprocessor "application/javascript", WebpackRails::WebpackProcessor
     end
 
     rake_tasks do 
