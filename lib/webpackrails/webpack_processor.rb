@@ -5,6 +5,7 @@ require 'open3'
 require 'tempfile'
 require 'fileutils'
 require 'shellwords'
+require 'digest/sha1'
 
 module WebpackRails
   class WebpackProcessor < Tilt::Template
@@ -25,16 +26,50 @@ module WebpackRails
       # return if there is nothing to do
       return data unless should_webpack?
 
-      evaluated = run_webpack(context.pathname || context.logical_path)
+      if config.embed_erb
+        run_webpack(context.pathname || context.logical_path, false)
 
-      evaluate_dependencies(context.environment.paths).each do |path|
-        context.depend_on(path.to_s)
+        evaluate_dependencies(context.environment.paths).each do |path|
+          context.depend_on(path.to_s)
+        end
+
+        if !@erb_deps.empty?
+          evaluate_erb_deps(context, locals)
+        end
+
+        evaluated = run_webpack(context.pathname || context.logical_path)
+      else
+        evaluated = run_webpack(context.pathname || context.logical_path)
+        evaluate_dependencies(context.environment.paths).each do |path|
+          context.depend_on(path.to_s)
+        end
       end
-
+      
       evaluated
     end
 
     private 
+
+    def evaluate_erb_deps(context, locals)
+      return if @erb_deps.empty?
+
+      # dep is a path
+      @erb_deps.each do |dep|
+        begin 
+          shaname = sha1(dep)
+          tmpfile = File.join(@erb_deps_root, shaname)
+          template = Tilt::ERBTemplate.new(dep)
+          template = template.render(context, locals)
+          file = File.open(tmpfile, 'w')
+          file.write(template)
+          file.close()
+        end
+      end
+    end
+
+    def sha1(content)
+      Digest::SHA1.hexdigest content
+    end
 
     # Set the temp path
     def tmp_path
@@ -50,13 +85,20 @@ module WebpackRails
     def ensure_tmp_dir_exists!
       FileUtils.mkdir_p(rails_path(tmp_path))
       @deps_path ||= File.join(tmp_path, '_$webpackrails_dependencies');
+      @erb_deps_root ||= rails_path('tmp/cache/webpackrails/erbs').freeze
+
+      FileUtils.mkdir_p(@erb_deps_root)
     end
 
-    # Filter out node_module/ files
+    # Filter out node_module/ files and erb files.
     def evaluate_dependencies(asset_paths) 
-      return dependencies if !config.ignore_node_modules
+      return dependencies if !config.ignore_node_modules and !config.embed_erb
 
-      dependencies.select do |path|
+      @erb_deps = []
+      deps = dependencies.select do |path|
+        if File.extname(path) == '.erb'
+          @erb_deps << path 
+        end
         path.start_with?(*asset_paths)
       end
     end
@@ -150,8 +192,13 @@ module WebpackRails
       false 
     end
 
-    def run_webpack(logical_path=nil)
-      command_options = "--colors --config #{@config_file} #{logical_path} --bail --output-filename"
+    def run_webpack(logical_path=nil, bail= true)
+      if bail
+        command_options = "--colors --config #{@config_file} #{logical_path} --bail --output-filename"
+      else 
+        command_options = "--colors --config #{@config_file} #{logical_path} --output-filename"
+      end
+      
       output_file = Tempfile.new("output", rails_path(tmp_path))
       command_options << " #{output_file.path.inspect}"
 

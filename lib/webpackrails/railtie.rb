@@ -19,12 +19,15 @@ module WebpackRails
     # ignore node_modules
     config.webpackrails.ignore_node_modules = true
 
+    # embed erb
+    config.webpackrails.embed_erb = false
+
     # array of string to test if the file need to be process by this gem.
     # see `commonjs_module?` method
     config.webpackrails.force_condition = []
 
     initializer :setup_webpack do |app|
-      app.assets.register_preprocessor "application/javascript", WebpackRails::WebpackProcessor
+      app.assets.register_postprocessor "application/javascript", WebpackRails::WebpackProcessor
     end
 
     rake_tasks do 
